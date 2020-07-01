@@ -1,0 +1,93 @@
+Dugaesescu Andrei 331CC
+
+Tema #3 Procesare de imagini folosind MPI
+
+	Solutia propusa are la baza distribuirea catre fiecare proces disponibil a unui fragment al imaginii de intrare in vederea prelucrarii acestuia. Fiecarui proces ii sunt asociate un numar de randuri in felul urmator: primul proces, numit MASTER (procesul cu rank 0) se va ocupa de prelucrarea primelor randuri de pixeli ale imaginii, urmatorul proces (ca rank) va primi urmatoarele randuri, logica repetandu-se pana cand se ajunge la ultimul proces care va primi ultimele randuri ale imaginii. Pentru intelegerea functionalitatii programului imaginea poate fi privita ca o serie de unitati grupate pe height randuri si width coloane (unde width si height sunt parametrii ce descriu rezolutia imaginii). Un rand este astfel compus dintr-un numar de width unitati consecutive.
+	------------
+	| 1|| 2|| 3| - primul rand
+	------------	
+	| 4|| 5|| 6| - al doilea rand
+	------------	
+	| 7|| 8|| 9| - al treilea rand
+	------------	
+	|10||11||12| - ultimul rand
+	------------
+
+	Pentru un numar de randuri care s-ar imparti perfect la numarul de procese disponibile, fiecarui proces i-ar fi distribuite height/P randuri, unde P reprezinta numarul total de procese. In cazul in care aceasta impartire nu ar fi exacta, restul obtinut in urma calculului impartirii ar reprezenta numarul de randuri pe care ultimul proces ar trebui sa le prelucreze in plus fata de celelalte procese. Pentru a evita o astfel de distribuire neechilibrata a volumului de munca, procesele avand rank-ul mai mic decat restul impartirii height/P (primele height mod P procese) vor primi fiecare cate un rand in plus. Cu alte cuvinte, pentru ca ultimul proces sa nu calculeze (height/P + height mod P) randuri, primele (height mod P) procese vor revendica fiecare cate un rand in plus. Cu toate acestea, modul de calcul a valorii unui pixel in urma aplicarii unui filtru implica utilizarea tuturor celorlalti 8 pixeli care inconjoara pixelul pentru care se caluleaza noua valoare simpla distribuire a "aporximativ" height/P randuri nu ar fi suficienta intrucat lipseste informatia aflata in vecinatatea extremitatilor. Sa consideram cazul unei imagini de 15 x 3 pixeli si un numar P = 4 procese.  
+ 
+	--------------
+	| 1| | 2| | 3| - rand 1 |
+	-------------- 		|
+	| 4| | 5| | 6| - rand 2	|
+	-------------- 		| => randurile procesului cu rank 0 (MASTER)
+	| 7| | 8| | 9| - rand 3	|
+	--------------		|
+	|10| |11| |12| - rand 4	|
+	-------------- 		
+	|13| |14| |15| - rand 5	|
+	--------------		|
+	|16| |17| |18| - rand 6	|
+	--------------		| => randurile procesului cu rank 1
+	|19| |20| |21| - rand 7	|
+	--------------		|
+	|22| |23| |24| - rand 8	|
+	--------------
+	|25| |26| |27| - rand 9 |
+	--------------		|
+	|28| |29| |30| - rand 10|
+	--------------		| => randurile procesului cu rank 2
+	|31| |32| |33| - rand 11|
+	--------------		|
+	|34| |35| |36| - rand 12|
+	--------------
+	|37| |38| |39| - rand 13|
+	--------------		|
+	|40| |41| |42| - rand 14|
+	-------------- 		| => randurile procesului cu rank 3
+	|43| |44| |45| - rand 15|
+	--------------	
+
+
+	In modalitatea de impartire in care fiecare proces ar lua height/P randuri, procesele cu rank-urile 0, 1 si 2 ar avea fiecare cate 3 randuri, iar procesul cu rank 3 ar avea 6 randuri. Considerand distribuirea echilibrata a volumului de calcul, procesele 0, 1 si 2 vor avea fiecare cate 4 randuri de procesat (unul in plus fata de cele 3 randuri de baza), iar procesul 3 va avea 3 randuri. Insa, daca procesul 0 ar avea la dispozitie doar primele 4 randuri, acesta nu ar putea calcula corect valorile pentru ultimul rand, intrucat acesta nu cunoaste valorile vecinilor pentru pixelii de pe ultimul sau rand (marginea superioara si lateralele sunt considerate cuonscute deoarece se pleaca de la premiza conform careia matricea de pixeli a imaginii este bordata cu 0). In cazul proceselor urmatoare (cu rank 1 si 2) acestea au de asemenea nevoide de informatie suplimentara, atat pentru randul inferior cat si pentru randul superior. Daca in cazul procesului cu rank 0 aceasta cunostea faptul ca vecinii randului 1 au toti valoarea 0, intrucat nu exista practic acei vecini, pentru procesele 1 si 2, acestea au nevoie de acea informatie. Nu in ultimul rand, procesul cu rank 3 - ultimul, necesita de asemenea un rand suplimentar, cel imediat superior primului sau rand. Astfel, in faza de distribuire a fragmentelor de imagine (a randurilor ce compun imaginea) primul proces va avea nevoide un rand suplimentar, procesele cu rank-ruile intre 1 si P-2 vor primi fiecare cate doua randuri in plus, iar ultimul proces (cel cu rank P-1) va primi inca un rand in plus.
+
+	Executia programului se desfasoara in modul urmator: procesul cu rank 0 (MASTER) citeste integral imaginea; in urma citirii, acesta trimite proceselor cu rank-urile intre 1 si P-1 informatii utile inainte de a primi spre prelucrare fragmentele de imagine (si isi seteaza parametrii proprii), aceste informatii utile fiind: inaltimea (numarul de randuri asociat acelui proces) si lungimea fragmentului (width-ul imaginii de intrare), maxval si tipul imaginii (PGM sau PNM). Dupa aceea, procesul MASTER distribuie fragmentele de imaginii conform logicii de mai sus. Odata primit fragmentul asteptat un proces poate incepe aplicarea filtrului curent. Trebuie mentionat faptul ca procesele vor aplica filtru in modul urmator, vor presupune ca deasupra primului rand, sub utlimul rand si in lateralele tutoturor randurilor se afla numai valori de 0. Acest lucru conduce practic la un calcul suplimentar de un rand pentru procesele 0 si P-1 si doua randuri pentru procesele 1:P-2. Odata aplicat filtrul curent, fiecare proces trimite inapoi acea parte utila a imaginii pentru care a aplicat filtrul (nu se trimit inapoi randurile suplimentare) catre procestul MASTER care va alinia fragmentele primite astfel incat in urma primirii si ultimului fragment sa obtina imaginea finala. In cazul in care mai exista filtre ce trebuie aplicate, imaginea rezultat de la aplicarea filtrului anterior este din nou distribuita catre cele P-1 procese (procesului 0 nu ii este trimis un fragment pe care asteapta sa il receptioneze, acesta detine imaginea), logica de aplicare a noului filtru fiind identica cu cea de la filtrul anterior. Aceasta operatie de distribuire, receptie si compunere a noii imagini se repeta de atatea ori cate filtre exista, urmand ca la final, procestul MASTER sa scrie la iesire imaginea finala (rezultatul final). Pe scurt, procesul MASTER (procesul cu rank 0) citeste imaginea, trimite numarul de randuri si alte cateva informatii necesare prelucrarii corecte a imaginii catre celelalte procese dupa care trimite P-1 fragmenete de imagine catre celelalte procese; fiecare proces care a primit un fragment aplica filtrul cuernt pe bucata de imagine primita. Dupa ce a distribuit fragmentele, procesul MASTER aplica la randul sau filtrul asupra bucatii proprii de imagine. Odata calculat noul fragment, procesele trimit inapoi rezultatul catre MASTER. Procesul MASTER strange aceste rezultate si compune imaginea finala. Odata aplicate toate filtrele (facute distribuirile de fragmente si receptia rezultatelor), procesul cu rank 0 compune noua imagine si o scoate la iesire. 
+	
+	Eficientizarea procesului de aplicare a filtrelor se regaseste in executia paralela a unui volum de munca (calcul) mai mic fata de intreaga informatie de intrare. Cu alte cuvinte, mai multe procese executa simultan mai putin efort computational (relativ cu ce ar trebui sa faca un singur proces).
+
+Timpi de rulare:
+
+Pentru un filtru: smooth
+PGM: rorschach.pgm
+1 proces : 1.138s
+2 procese: 0.895s
+3 procese: 0.8192
+4 procese: 0.789s
+
+
+PNM: landscape.pnm
+1 proces : 1.919s
+2 procese: 1.323s
+3 procese: 0.721s
+4 procese: 0.625s
+
+
+
+Pentru un mai multre filtre (bssembssem): blur smooth sharpen emboss mean blur smooth sharpen emboss mean
+PGM: rorschach.pgm
+1 proces : 7.310s
+2 procese: 3.905s
+3 procese: 2.971s
+4 procese: 2.517s
+
+
+PNM: landscape.pnm
+1 proces : 15.07s
+2 procese: 8.362s
+3 procese: 6.372s
+4 procese: 5.061s
+
+
+
+
+
+	
