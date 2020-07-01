@@ -49,29 +49,29 @@ The program represents the filters as a 3x3 Matrix. Below you can find a detaile
 
 Improves the differences in images.
 
-<img src="ColectiePoze/README_Images/smooth.png" height="150"/>
+<img src="Images/README_Images/smooth.png" height="150"/>
 
 ### Approximative Gaussian Blur filter
 
 Reduces the background noise in the image.
 
-<img src="ColectiePoze/README_Images/blur.png" height="150"/>
+<img src="Images/README_Images/blur.png" height="150"/>
 
 ### Sharpen
 
 Accentuates the details in the image.
 
-<img src="ColectiePoze/README_Images/sharpen.png" height="150"/>
+<img src="Images/README_Images/sharpen.png" height="150"/>
 
 ### Mean removal
 
 Similar to "Sharpen" it improves the details in the image but Mean removal uses the values of the diagonal adjacent pixels
 
-<img src="ColectiePoze/README_Images/mean.png" height="150"/>
+<img src="Images/README_Images/mean.png" height="150"/>
 
 ### Emboss
 
-<img src="ColectiePoze/README_Images/emboss.png" height="150"/>
+<img src="Images/README_Images/emboss.png" height="150"/>
 
 ---
 
@@ -79,7 +79,7 @@ Similar to "Sharpen" it improves the details in the image but Mean removal uses 
 
 ### Original image:
 
-<img src="ColectiePoze/README_Images/darth-vader.png"/>
+<img src="Images/README_Images/darth-vader.png"/>
 
 ---
 
@@ -90,7 +90,7 @@ mpirun -np 4 ./tema3 darth-vader.pgm dv-shapren.pgm sharpen
 
 ```
 
-<img src="ColectiePoze/README_Images/dv-sharpen.png"/>
+<img src="Images/README_Images/dv-sharpen.png"/>
 
 ---
 
@@ -101,7 +101,7 @@ mpirun -np 4 ./tema3 darth-vader.pgm dv-blur.pgm blur
 
 ```
 
-<img src="ColectiePoze/README_Images/dv-blur.png"/>
+<img src="Images/README_Images/dv-blur.png"/>
 
 ---
 
@@ -112,7 +112,7 @@ mpirun -np 4 ./tema3 darth-vader.pgm dv-mean.pgm mean
 
 ```
 
-<img src="ColectiePoze/README_Images/dv-mean.png"/>
+<img src="Images/README_Images/dv-mean.png"/>
 
 ---
 
@@ -123,7 +123,7 @@ mpirun -np 4 ./tema3 darth-vader.pgm dv-smooth.pgm smooth
 
 ```
 
-<img src="ColectiePoze/README_Images/dv-smooth.png"/>
+<img src="Images/README_Images/dv-smooth.png"/>
 
 ---
 
@@ -134,7 +134,7 @@ mpirun -np 4 ./tema3 darth-vader.pgm dv-extra-smooth.pgm smooth smooth smooth
 
 ```
 
-<img src="ColectiePoze/README_Images/dv-extra-smooth.png"/>
+<img src="Images/README_Images/dv-extra-smooth.png"/>
 
 ---
 
@@ -145,7 +145,7 @@ mpirun -np 4 ./tema3 darth-vader.pgm dv-emboss.pgm emboss
 
 ```
 
-<img src="ColectiePoze/README_Images/dv-emboss.png"/>
+<img src="Images/README_Images/dv-emboss.png"/>
 
 ---
 
@@ -156,4 +156,4 @@ mpirun -np 4 ./tema3 darth-vader.pgm dv-all.pgm smooth blur sharpen mean emboss
 
 ```
 
-<img src="ColectiePoze/README_Images/dv-all.png"/>
+<img src="Images/README_Images/dv-all.png"/>
